@@ -37,11 +37,16 @@
     {
       "match": "or machines list",
       "file": "machines.json"
+    },
+    {
+      "match": "docsai ask",
+      "passthrough": true,
+      "_doc": "Proxy any docsai query to the real uip CLI; query strings vary between runs so canned responses go stale. Optional corroboration step in the playbook — an empty/failed KB result is not disconfirming."
     }
   ],
   "unmocked_default": {
     "response": "[]\n",
     "exit_code": 0,
-    "_doc": "Permissive fallback: any uip command not matched above (including docsai) returns an empty array so the agent can explore beyond the recorded path without aborting."
+    "_doc": "Permissive fallback: any uip command not matched above returns an empty array so the agent can explore beyond the recorded path without aborting."
   }
 }
