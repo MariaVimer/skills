@@ -15,7 +15,7 @@ uip solution init "<SolutionName>" --output json
 # 2. Init the flow project inside the solution folder.
 #    When run from inside a solution directory, `flow init` auto-registers
 #    the project with the parent `.uipx` (pass `--skip-solution-registration` to skip) —
-#    no manual `solution project add` is required. Confirm via
+#    no manual `solution projects add` is required. Confirm via
 #    `Data.SolutionRegistration.Status` in the response (`Registered` or
 #    `AlreadyRegistered`).
 cd <directory>/<SolutionName> && uip maestro flow init <ProjectName> --output json
@@ -24,7 +24,7 @@ cd <directory>/<SolutionName> && uip maestro flow init <ProjectName> --output js
 #    `NotInSolution` / `Skipped` / `Failed` — typically because init was run
 #    outside the solution dir and produced a single-nested layout. (`OptedOut`
 #    means `--skip-solution-registration` was passed and the skip was intentional.)
-uip solution project add \
+uip solution projects add \
   <directory>/<SolutionName>/<ProjectName> \
   <directory>/<SolutionName>/<SolutionName>.uipx
 ```

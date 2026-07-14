@@ -10,7 +10,7 @@ All commands output `{ "Result": "Success"|"Failure", "Code": "...", "Data": { .
 
 | Commands | What | Auth |
 |----------|------|------|
-| `solution init`, `solution project add`, `solution resources refresh`, `solution upload` | Solution scaffold + resource sync + Studio Web upload | Yes (for `upload`) |
+| `solution init`, `solution projects add`, `solution resources refresh`, `solution upload` | Solution scaffold + resource sync + Studio Web upload | Yes (for `upload`) |
 | `solution resources add --source local\|remote`, `solution resources remove <key>`, `solution resources edit <key>` | Atomic single-resource mutations (local stub or remote import; delete by key; patch spec via `--patch '<json>'`) — see [uipath-solution Step 9–11](/uipath:uipath-solution) | Only `--source remote` requires auth; `remove`/`edit` are offline |
 | `registry pull/list/search`, `get-connector`, `get-connection`, `tasks describe`, `is resources/triggers describe` | Registry + metadata discovery (read-only) | Yes (for `pull`) |
 | `validate` | Validate `caseplan.json` | No |
@@ -46,11 +46,11 @@ cd <SolutionDir> && uip maestro case init <ProjectName>
 |------|-------------|
 | `<ProjectName>` | **(required)** Project directory name. Created inside the current directory |
 
-Run from inside the solution directory so the resulting layout is `<SolutionDir>/<ProjectName>/`. When run from inside a solution directory, `case init` **auto-registers** the project with the parent `.uipx` — confirm via `Data.SolutionRegistration.Status` in the response (`Registered` or `AlreadyRegistered`). Pass `--skip-solution-registration` to skip auto-registration (the status is then `OptedOut`). Use `uip solution project add ./<ProjectName>` as a fallback when `Status` is `NotInSolution` (`init` ran outside a solution), `Skipped` (ambiguous discovery), or `Failed` (`.uipx` write error). Note: the SKILL's standard JSON-authoring path (see `plugins/case/impl-json.md`) does not invoke `case init` and still requires the explicit `solution project add` step — see `implementation.md` § Step 6.
+Run from inside the solution directory so the resulting layout is `<SolutionDir>/<ProjectName>/`. When run from inside a solution directory, `case init` **auto-registers** the project with the parent `.uipx` — confirm via `Data.SolutionRegistration.Status` in the response (`Registered` or `AlreadyRegistered`). Pass `--skip-solution-registration` to skip auto-registration (the status is then `OptedOut`). Use `uip solution projects add ./<ProjectName>` as a fallback when `Status` is `NotInSolution` (`init` ran outside a solution), `Skipped` (ambiguous discovery), or `Failed` (`.uipx` write error). Note: the SKILL's standard JSON-authoring path (see `plugins/case/impl-json.md`) does not invoke `case init` and still requires the explicit `solution projects add` step — see `implementation.md` § Step 6.
 
 ---
 
-## uip solution project add
+## uip solution projects add
 
 Register a project with an existing solution. Used in two scenarios in this skill:
 
@@ -58,7 +58,7 @@ Register a project with an existing solution. Used in two scenarios in this skil
 2. **Fallback for `uip maestro case init`** — when `case init` returns `Data.SolutionRegistration.Status` of `NotInSolution`, `Skipped`, or `Failed`, run this manually to wire the project in. When `case init` returns `Registered` or `AlreadyRegistered`, this command is redundant. When it returns `OptedOut` (`--skip-solution-registration` was passed), the skip was intentional — run this only if you later decide to register.
 
 ```bash
-uip solution project add <ProjectName> <SolutionName>.uipx
+uip solution projects add <ProjectName> <SolutionName>.uipx
 ```
 
 | Flag | Description |

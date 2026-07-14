@@ -149,7 +149,7 @@ If `Data.SolutionRegistration.Status` is `Registered` or `AlreadyRegistered`, **
 **Fallback** — when `Status` is `NotInSolution` (no parent `.uipx` found — `init` was run outside the solution directory and produced a single-nested layout), `Skipped` (ambiguous discovery), or `Failed` (the `.uipx` write failed): wire the project manually.
 
 ```bash
-uip solution project add \
+uip solution projects add \
   <directory>/<SolutionName>/<ProjectName> \
   <directory>/<SolutionName>/<SolutionName>.uipx
 ```

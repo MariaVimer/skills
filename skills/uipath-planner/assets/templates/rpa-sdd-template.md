@@ -632,14 +632,14 @@ The build is not finished when the project folder compiles. **The terminal artef
 
 ```bash
 uip solution init <SOLUTION_NAME>
-uip solution project add <PROJECT_PATH> [--solution-file <SOLUTION_FILE>]    # repeat per project in the unified list
+uip solution projects add <PROJECT_PATH> [--solution-file <SOLUTION_FILE>]    # repeat per project in the unified list
 uip solution resources refresh
 uip solution pack <SOLUTION_DIR> <OUTPUT_DIR>
 ```
 
 For a single-project build, the solution wrap is still required — `uip solution pack` produces a `.uipx` that can be promoted via `uip solution publish` / `uip solution deploy run`. A bare `MyProject/` folder is not deployable through the modern lifecycle and is not the deliverable.
 
-For multi-project (Master Project) builds, run `uip solution project add` once per sub-project (Dispatcher / Performer / Reporting / Library / Test Automation) before `pack`.
+For multi-project (Master Project) builds, run `uip solution projects add` once per sub-project (Dispatcher / Performer / Reporting / Library / Test Automation) before `pack`.
 
 Full `uip solution` lifecycle: load the `uipath-solution` skill.
 
