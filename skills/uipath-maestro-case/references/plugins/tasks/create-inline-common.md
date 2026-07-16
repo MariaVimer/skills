@@ -1,8 +1,8 @@
 # Create-on-Missing — shared rule text (all creatable types)
 
-Kind-agnostic rule text for building a missing resource inline at the [Rule 17 gate](../../registry-discovery.md#must-confirm-before-placeholder-fallback). Orchestration (gate, select, § 1c build-dedup, parallel build, sequential register, rediscover/verify/bind) lives in [registry-discovery.md § Create-on-Missing](../../registry-discovery.md#create-on-missing-build-and-rediscovery); this file holds the per-type steps every creatable type shares. Per-type deltas — the Step 2 builder brief, build-kind choice, debug-provisioning behavior, § 3b adopt tokens — live in each type's `planning.md` § Creating-inline section, which points here.
+Kind-agnostic rule text for building a missing resource inline at the [Rule 17 gate](../../registry-discovery.md#must-confirm-before-placeholder-fallback). Orchestration (gate, select, § 1c build-dedup, parallel build, pre-register interface gate, sequential register, rediscover/verify/bind) lives in [registry-discovery.md § Create-on-Missing](../../registry-discovery.md#create-on-missing-build-and-rediscovery); this file holds the per-type steps every creatable type shares. Per-type deltas — the Step 2 builder brief, build-kind choice, debug-provisioning behavior, § 3b adopt tokens — live in each type's `planning.md` § Creating-inline section, which points here.
 
-**Plugging in a new creatable type** (RPA, agentic process, …): add a "Creating a `<type>` inline" section to the type's `planning.md` that points to this file for Steps 1/1b/3/Failure and supplies only the deltas: a Step 2 brief, a `resourceSubType` row in the [§ Step 3 table](#step-3--binding-invariants), debug-provisioning behavior, and § 3b adopt tokens. The § Step 3 table row is the only edit needed in this file.
+**Plugging in a new creatable type** (RPA, agentic process, …): add a "Creating a `<type>` inline" section to the type's `planning.md` that points to this file for Steps 1/1b/3, I/O reconciliation, and Failure, and supplies only the deltas: a Step 2 brief, the native-type normalization map used by the interface gate, a `resourceSubType` row in the [§ Step 3 table](#step-3--binding-invariants), debug-provisioning behavior, and § 3b adopt tokens. The § Step 3 table row is the only edit needed in this file.
 
 ## Step 1 — Compute the pinned I/O contract
 
@@ -46,8 +46,56 @@ After the sibling is built, registered, and verified (orchestration §), bind th
 
 > **Resolution (deploy PROVISIONS the sibling; provisioning ≠ invocation).** Deploy resolves the resource-identity layer end-to-end: a local-only sibling (not in the tenant) co-deploys with the case at `uip solution deploy run` and is **provisioned into the solution's Orchestrator folder** (e.g. `Shared/<Solution> N`), becoming a real resource there. It needs **no** `debug_overwrites` mapping for that (that maps pre-existing tenant resources; `resources refresh` skips in-solution siblings, `Skipped: already in solution`). **But provisioning ≠ invocation:** at runtime the deployed case starts the sibling using its baked-in `data.folderPath`, so that value MUST be `""` (co-located). **Prerequisites:** (1) the sibling registered in the `.uipx` before deploy/debug; (2) the case `folderPath` binding `default` = `""`. `validate` checks neither — it accepts `solution_folder` and `""` alike. **Whether `uip maestro case debug` provisions the sibling is per-type** (e.g. agent siblings resolve in debug; Api siblings do NOT — incident `170007`, full-deploy-only runtime verification) — see each type's § Step 3.
 
+## I/O contract reconciliation — invocation-interface gate
+
+The case skill trusts the owning type skill to implement and validate the resource's business behavior. This gate checks only the interface the case must invoke: a resource **freshly built by the current Create flow** must expose the pinned fields from [Step 1](#step-1--compute-the-pinned-io-contract) before registration. Read the authoritative, case-preserving on-disk contract for the type, normalize equivalent native types through the type's documented mapping, then compare by **exact field name and direction**. Agent and API-workflow contracts use JSON Schema, so normalize their pinned Case types through the canonical [entry-point schema mapping](../../entry-points-sync.md#per-variable-property-body); a new type with a different native schema must supply its own mapping. Never convention-match a rename (`classification` is not `out_classification`), fabricate a missing field, or silently coerce an incompatible type.
+
+Do **not** apply this gate to a registered pre-existing sibling or an adopted on-disk residual. Resolve those resources through their existing paths, persist their actual contract, and rely on the established [resolved-resource I/O completeness check](../../implementation.md#step-12--end-of-phase-3-validator-pass) to prompt for unbound required inputs or phantom consumed outputs. The case skill does not take ownership of repairing a resource built outside the current Create flow.
+
+Classify the diff:
+
+| Result | Scenarios | Action |
+|---|---|---|
+| **Blocking** | Pinned input absent; pinned output absent; pinned known type maps to an incompatible native type; field exists only in the opposite direction; sibling adds a required input the case does not bind; expected non-empty contract is null/unreadable | Do not register the new resource. Prompt for correction or defer as below. |
+| **Compatible** | Exact pinned fields present; planning-time untyped field now has a concrete type; known case/native types are equivalent after normalization; pinned required input is optional in the sibling | Accept the sibling contract. |
+| **Non-blocking extra** | Additional optional input; additional output; description/property-order difference | Record the actual contract, report useful extras, and continue. |
+
+### Repair policy
+
+- **First blocking mismatch:** show the exact diff and AskUserQuestion: `Retry correction` / `Skip (defer)`. Do not edit automatically; surface this exceptional builder/schema drift before retrying.
+- **Retry correction:** invoke the **same owning type skill** against the existing project path with the exact blocking diff. The correction MUST edit in place: do not run `init`, rename, register, publish, upload, deploy, or execute the resource. Re-read the authoritative on-disk contract afterward.
+- **Still blocking:** show the exact remaining diff and offer `Retry correction` / `Skip (defer)` once more. On Skip or a **second consecutive correction failure**, do not prompt again: leave the project unregistered, use the type's Unresolved Fallback, and keep the task as a placeholder. Do not offer a generic continue-with-mismatch path: a task whose invocation interface is incompatible is not resolved.
+
+Prompt shapes:
+
+```text
+Question (new build): Newly built <type> "<Name>" does not satisfy the case invocation contract: <exact diff>.
+Options: Retry correction / Skip (defer)
+
+Question (correction failed): <type> "<Name>" still does not satisfy the case invocation contract after correction: <exact remaining diff>.
+Options: Retry correction / Skip (defer)
+```
+
+Self-contained correction brief:
+
+```text
+Correct the newly built UiPath <type> by following <owning-type-skill>. Non-interactive:
+do not ask for approval; do not init/recreate, rename, register, publish/upload/deploy,
+or execute the resource.
+  Resource path:    <absolute newly built project path>
+  Purpose:          <the original Step-1b Purpose>
+  Required inputs:  <the original Step-1 pinned inputs>
+  Required outputs: <the original Step-1 pinned outputs>
+  Contract diff:    <missing/incompatible/extra-required fields with expected vs actual>
+Edit the resource in place so its authoritative on-disk invocation contract satisfies the
+required fields. Preserve additional compatible fields. Return JSON:
+{ built: bool, path, finalInputs:[{name,type}], finalOutputs:[{name,type}], error? }
+```
+
+The returned arrays are a liveness signal only; always re-read the authoritative on-disk contract. A new resource left on disk after Skip is retained unregistered and named in the completion report as built but not referenced; never delete it silently.
+
 ## Failure — surface and re-prompt, never stall
 
-Mirrors [connector-integration.md § Creating a Connection](../../connector-integration.md#creating-a-connection) step 4. If a build sub-agent returns `built:false` (or dies), show its `error` verbatim, then AskUserQuestion: `Retry create` / `Skip (defer)`. On `Skip` or repeated failure, fall to the type's Unresolved Fallback (placeholder + completion-report note) and finish planning — never halt. A verify-time I/O mismatch is a **warning**, not a failure: rewire matched fields, report missing/extra, continue.
+Mirrors [connector-integration.md § Creating a Connection](../../connector-integration.md#creating-a-connection) step 4. If a build sub-agent returns `built:false` (or dies), show its `error` verbatim, then AskUserQuestion: `Retry create` / `Skip (defer)`. On `Skip` or repeated failure, fall to the type's Unresolved Fallback (placeholder + completion-report note) and finish planning — never halt. A returned `built:true` is still subject to the [I/O invocation-interface gate](#io-contract-reconciliation--invocation-interface-gate); blocking contract mismatches use that section's correction/defer flow.
 
 > **"Already exists" is NOT a failure** — an interrupted prior run already built the sibling; adopt it per [registry-discovery.md § Create-on-Missing → 3b](../../registry-discovery.md#create-on-missing-build-and-rediscovery). Per-type adopt tokens (init verb, kind markers, stale-declaration subpath) live in each type's § Failure blockquote.

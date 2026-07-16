@@ -134,6 +134,10 @@ For each § 1c-unique resource, compute its build brief — agents per [agent/pl
 
 The skill itself never runs the type CLI's `init` — build knowledge lives in the type skill. Only gate-selected resources are built; SDD content alone never triggers a build.
 
+### 2b — Pre-register I/O contract gate
+
+For every newly built resource that returned `built:true`, read its authoritative case-preserving I/O from the returned project path and apply [create-inline-common.md § I/O contract reconciliation](plugins/tasks/create-inline-common.md#io-contract-reconciliation--invocation-interface-gate). Only resources with no blocking mismatch proceed to § 3 registration. Correction requires the user's `Retry correction` choice and edits the existing project in place through the same owning type skill; it never re-runs `init`. On Skip or a second correction failure, leave the project unregistered on disk, name it in the completion report as built but not referenced, and send every task in its § 1c group through the type's Unresolved Fallback.
+
 ### 3 — Register (sequential)
 
 The `.uipx` is a shared file; concurrent registration races. So build skips registration, and **the parent registers each built sibling sequentially** after the wave returns:

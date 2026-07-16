@@ -99,7 +99,7 @@ Delivery: a **coded** sibling delivered via **`uip solution upload`** then **ins
 
 ### Failure — surface and re-prompt, never stall
 
-Shared contract — [create-inline-common.md § Failure](../create-inline-common.md#failure--surface-and-re-prompt-never-stall): `built:false` → show `error` verbatim → AskUserQuestion `Retry create` / `Skip (defer)` → on Skip/repeat, Unresolved Fallback above; verify-time I/O mismatch = warning, never a failure.
+Shared contract — [create-inline-common.md § Failure](../create-inline-common.md#failure--surface-and-re-prompt-never-stall): `built:false` → show `error` verbatim → AskUserQuestion `Retry create` / `Skip (defer)` → on Skip/repeat, Unresolved Fallback above. A returned `built:true` must also pass the shared [I/O invocation-interface gate](../create-inline-common.md#io-contract-reconciliation--invocation-interface-gate).
 
 > **"Already exists" is NOT a failure** — an interrupted prior run already built the sibling; adopt it per [registry-discovery.md § Create-on-Missing → 3b](../../../registry-discovery.md#create-on-missing-build-and-rediscovery). Agent tokens for that procedure: init verb `uip agent init`; kind markers `Category: "agent"` (registered) / `agent.json` on disk (unregistered).
 

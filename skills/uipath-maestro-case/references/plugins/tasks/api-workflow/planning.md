@@ -112,7 +112,7 @@ Shared invariants — [create-inline-common.md § Step 3](../create-inline-commo
 
 ### Failure — surface and re-prompt, never stall
 
-Shared contract — [create-inline-common.md § Failure](../create-inline-common.md#failure--surface-and-re-prompt-never-stall): `built:false` → show `error` verbatim → AskUserQuestion `Retry create` / `Skip (defer)` → on Skip/repeat, Unresolved Fallback above; verify-time I/O mismatch = warning, never a failure.
+Shared contract — [create-inline-common.md § Failure](../create-inline-common.md#failure--surface-and-re-prompt-never-stall): `built:false` → show `error` verbatim → AskUserQuestion `Retry create` / `Skip (defer)` → on Skip/repeat, Unresolved Fallback above. A returned `built:true` must also pass the shared [I/O invocation-interface gate](../create-inline-common.md#io-contract-reconciliation--invocation-interface-gate).
 
 > **"Already exists" is NOT a failure** — an interrupted prior run already built the sibling; adopt it per [registry-discovery.md § Create-on-Missing → 3b](../../../registry-discovery.md#create-on-missing-build-and-rediscovery). api-workflow tokens for that procedure: init verb `uip api-workflow init`; kind markers `Category: "api"` (registered) / `project.uiproj` `ProjectType: "Api"` (unregistered); stale-declaration category subpath `process/api/`.
 
